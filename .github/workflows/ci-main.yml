@@ -8,21 +8,38 @@ on:
 jobs:
   production:
     runs-on: ubuntu-latest
+    # Ye permissions zaroori hain tags push karne ke liye
+    permissions:
+      contents: write
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Saari history fetch karega taaki tagging sahi ho
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - run: npm install
-      - run: npm test
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
 
       - name: Build Docker Image
         run: docker build -t secure-app .
 
-      - name: Tag Version
+      - name: Git Tag and Push
         run: |
+          # Git identity set karna padta hai varna push fail hoga
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Naya tag create karna
           git tag v1.${{ github.run_number }}
-          git push origin --tags
+          
+          # Tag ko origin par push karna
+          git push origin v1.${{ github.run_number }}
